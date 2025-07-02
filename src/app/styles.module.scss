@@ -1,0 +1,17 @@
+.wrapper {
+  min-height: 98vh;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content {
+  padding: 20px;
+
+  min-width: 700px;
+  min-height: 500px;
+
+  border: 2px solid rgb(60, 255, 0);
+}
