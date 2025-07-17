@@ -1,4 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { App } from "./app/App.tsx";
+import { AppWithMyScroller } from "./app/AppWithMyScroller";
+// import { AppWithVirtualScroller } from "./app/AppWithVirtualScroller";
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(<AppWithMyScroller />);
+// createRoot(document.getElementById("root")!).render(<AppWithVirtualScroller />);
