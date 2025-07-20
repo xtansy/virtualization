@@ -19,19 +19,23 @@ export const VirtualScroller_My = <T,>({
   visibleItemsCount = 5,
   renderItem,
 }: IVirtualScroller_My<T>) => {
-  const [topOtopffsetPx, setTopOffsetPx] = useState<number>(0);
+  const [topOffsetPx, setTopOffsetPx] = useState<number>(0);
 
   const [overviewStartIndex, setOverviewStartIndex] = useState<number>(
     OVERVIEW_START_INDEX_DEFAULT
   );
 
   const overviewHeight = itemHeight * visibleItemsCount;
+  const realHeight = itemHeight * items.length;
+
+  const overviewEndIndex = overviewStartIndex + visibleItemsCount;
+
+  const bottomOffsetPx = realHeight - topOffsetPx - overviewHeight;
 
   const onScrollOverview = (event: UIEvent<HTMLDivElement>) => {
     const scrollTop = event.currentTarget.scrollTop;
 
-    const scrolledItems = Math.floor(scrollTop / itemHeight); // если элемент полностью не проскролен, то вернет -1
-    // const scrolledItemsRound = Math.round(scrollTop / itemHeight); // если элемент проскролен на 0.8(не полностью), то будет считать, что проскролили его уже
+    const scrolledItems = Math.floor(scrollTop / itemHeight); // если элемент полностью не проскролен, то не будем считать его проскроленным
 
     setTopOffsetPx(scrolledItems * itemHeight);
     setOverviewStartIndex(scrolledItems);
@@ -43,8 +47,9 @@ export const VirtualScroller_My = <T,>({
       style={{ height: overviewHeight }}
       className={styles.viewport}
     >
-      <div style={{ height: topOtopffsetPx }} />
-      {items.slice(overviewStartIndex).map(renderItem)}
+      <div style={{ height: topOffsetPx }} />
+      {items.slice(overviewStartIndex, overviewEndIndex).map(renderItem)}
+      <div style={{ height: bottomOffsetPx }} />
     </div>
   );
 };
