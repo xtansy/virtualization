@@ -3,9 +3,9 @@ import styles from "./styles.module.scss";
 import { VirtualScroller_My } from "../components";
 import { generateMockArrayData, type IArrayItemMock } from "../utils";
 
-const MOCK_ITEMS: IArrayItemMock[] = generateMockArrayData(100);
+const MOCK_ITEMS: IArrayItemMock[] = generateMockArrayData(20);
 
-const ITEM_HEIGHT = 20;
+const ITEM_HEIGHT = 50;
 
 const renderItem = (item: IArrayItemMock) => {
   return (

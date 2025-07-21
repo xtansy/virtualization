@@ -1,10 +1,17 @@
 import styles from "./styles.module.scss";
 
-import { useState, type ReactNode, type UIEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type UIEvent,
+} from "react";
 
 interface IVirtualScroller_My<T> {
   itemHeight?: number;
   paddingItemsCount?: number; // количество дополнительных элементов сверху и снизу по отдельности
+  startIndexDefault?: number;
 
   items: T[];
   visibleItemsCount?: number;
@@ -17,38 +24,54 @@ export const VirtualScroller_My = <T,>({
   itemHeight = 20,
   items,
   visibleItemsCount = 5,
+  paddingItemsCount = 2,
+  startIndexDefault = OVERVIEW_START_INDEX_DEFAULT,
   renderItem,
 }: IVirtualScroller_My<T>) => {
-  const [topOffsetPx, setTopOffsetPx] = useState<number>(0);
+  const overviewRef = useRef<HTMLDivElement>(null);
 
   const [overviewStartIndex, setOverviewStartIndex] = useState<number>(
     OVERVIEW_START_INDEX_DEFAULT
   );
 
+  const paddingStartIndex = Math.max(
+    overviewStartIndex - paddingItemsCount,
+    OVERVIEW_START_INDEX_DEFAULT
+  );
+  const paddingEndIndex = Math.min(
+    overviewStartIndex + visibleItemsCount + paddingItemsCount,
+    items.length
+  );
+
   const overviewHeight = itemHeight * visibleItemsCount;
   const realHeight = itemHeight * items.length;
 
-  const overviewEndIndex = overviewStartIndex + visibleItemsCount;
-
-  const bottomOffsetPx = realHeight - topOffsetPx - overviewHeight;
+  const topOffsetPx = paddingStartIndex * itemHeight;
+  const bottomOffsetPx = realHeight - paddingEndIndex * itemHeight;
 
   const onScrollOverview = (event: UIEvent<HTMLDivElement>) => {
     const scrollTop = event.currentTarget.scrollTop;
-
-    const scrolledItems = Math.floor(scrollTop / itemHeight); // если элемент полностью не проскролен, то не будем считать его проскроленным
-
-    setTopOffsetPx(scrolledItems * itemHeight);
+    // если элемент полностью не проскролен, то не будем считать его проскроленным
+    const scrolledItems = Math.floor(scrollTop / itemHeight);
     setOverviewStartIndex(scrolledItems);
   };
 
+  useEffect(() => {
+    if (overviewRef.current && startIndexDefault) {
+      const scrollTopDefault = startIndexDefault * itemHeight;
+      overviewRef.current.scrollTop = scrollTopDefault;
+    }
+  }, [itemHeight, startIndexDefault]);
+
   return (
     <div
+      ref={overviewRef}
       onScroll={onScrollOverview}
       style={{ height: overviewHeight }}
       className={styles.viewport}
     >
       <div style={{ height: topOffsetPx }} />
-      {items.slice(overviewStartIndex, overviewEndIndex).map(renderItem)}
+      {items.slice(paddingStartIndex, paddingEndIndex).map(renderItem)}
       <div style={{ height: bottomOffsetPx }} />
     </div>
   );
