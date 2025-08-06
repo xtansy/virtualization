@@ -11,7 +11,7 @@ export class ApiError extends Error {
 export interface IGetRowsParams {
   _start: number;
   _end?: number;
-  _limit?: number;
+  _limit?: number; // size
 }
 
 export interface IUser {

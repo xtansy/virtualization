@@ -14,8 +14,10 @@ interface IVirtualScroller_My<T> {
   startIndexDefault?: number;
 
   items: T[];
+  itemsCount: number;
   visibleItemsCount?: number;
   renderItem: (item: T) => ReactNode;
+  getData: (startIndex: number, limit: number) => Promise<T[]>;
 }
 
 const OVERVIEW_START_INDEX_DEFAULT = 0;
@@ -25,9 +27,14 @@ export const VirtualScroller_My = <T,>({
   items,
   visibleItemsCount = 5,
   paddingItemsCount = 2,
-  startIndexDefault = OVERVIEW_START_INDEX_DEFAULT,
+  startIndexDefault = 0,
   renderItem,
+  getData,
+  itemsCount,
 }: IVirtualScroller_My<T>) => {
+  const [innerItems, setInnerItems] = useState<T[]>(items);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   const overviewRef = useRef<HTMLDivElement>(null);
 
   const [overviewStartIndex, setOverviewStartIndex] = useState<number>(
@@ -40,11 +47,11 @@ export const VirtualScroller_My = <T,>({
   );
   const paddingEndIndex = Math.min(
     overviewStartIndex + visibleItemsCount + paddingItemsCount,
-    items.length
+    itemsCount
   );
 
   const overviewHeight = itemHeight * visibleItemsCount;
-  const realHeight = itemHeight * items.length;
+  const realHeight = itemHeight * itemsCount;
 
   const topOffsetPx = paddingStartIndex * itemHeight;
   const bottomOffsetPx = realHeight - paddingEndIndex * itemHeight;
@@ -57,11 +64,32 @@ export const VirtualScroller_My = <T,>({
   };
 
   useEffect(() => {
-    if (overviewRef.current && startIndexDefault) {
+    if (isLoading || !innerItems.length) return;
+
+    // paddingEndIndex - 1 > innerItems.length = как только скроллим на пустоту, то делаем запрос
+    if (paddingEndIndex - 1 > innerItems.length) {
+      const threshold = 10;
+      setIsLoading(true);
+      getData(innerItems.length, threshold)
+        .then((fetchedItems) => {
+          setInnerItems((oldItems) => [...oldItems, ...fetchedItems]);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [innerItems.length, isLoading, paddingEndIndex]);
+
+  useEffect(() => {
+    setInnerItems(items);
+  }, [items]);
+
+  useEffect(() => {
+    if (overviewRef.current && innerItems.length > 0) {
       const scrollTopDefault = startIndexDefault * itemHeight;
       overviewRef.current.scrollTop = scrollTopDefault;
     }
-  }, [itemHeight, startIndexDefault]);
+  }, [innerItems.length, itemHeight, startIndexDefault]);
 
   return (
     <div
@@ -71,7 +99,7 @@ export const VirtualScroller_My = <T,>({
       className={styles.viewport}
     >
       <div style={{ height: topOffsetPx }} />
-      {items.slice(paddingStartIndex, paddingEndIndex).map(renderItem)}
+      {innerItems.slice(paddingStartIndex, paddingEndIndex).map(renderItem)}
       <div style={{ height: bottomOffsetPx }} />
     </div>
   );

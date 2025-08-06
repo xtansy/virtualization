@@ -5,10 +5,10 @@ import { VirtualScroller } from "../components";
 const SETTINGS = {
   minIndex: 1,
   maxIndex: 16,
-  startIndex: 6,
-  itemHeight: 20,
+  startIndex: 0,
+  itemHeight: 50,
   amount: 5,
-  tolerance: 0,
+  tolerance: 2,
 };
 
 export interface IItem {
@@ -29,7 +29,11 @@ const getData = (offset: number, limit: number): IItem[] => {
 };
 
 const rowTemplate = (item: IItem) => (
-  <div style={{ height: SETTINGS.itemHeight }} key={item.index}>
+  <div
+    className={styles.item}
+    style={{ height: SETTINGS.itemHeight }}
+    key={item.index}
+  >
     {item.text}
   </div>
 );

@@ -68,6 +68,9 @@ export const VirtualScroller: FC<IVirtualScrollerProps> = ({
     const index =
       minIndex + Math.floor((scrollTop - toleranceHeight) / itemHeight);
     const data = get(index, bufferedItems);
+    console.log("index = ", index);
+    console.log("bufferedItems = ", bufferedItems);
+    console.log("data = ", data);
     const topPaddingHeight = Math.max((index - minIndex) * itemHeight, 0);
     const bottomPaddingHeight = Math.max(
       totalHeight - topPaddingHeight - data.length * itemHeight,
