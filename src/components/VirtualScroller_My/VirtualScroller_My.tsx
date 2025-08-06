@@ -10,10 +10,10 @@ import {
 
 interface IVirtualScroller_My<T> {
   itemHeight?: number;
-  paddingItemsCount?: number;
+  paddingItemsCount?: number; // количество дополнительных элементов сверху и снизу по отдельности
   startIndexDefault?: number;
 
-  items: T[]; // начальные данные
+  items: T[];
   itemsCount: number;
   visibleItemsCount?: number;
   renderItem: (item: T) => ReactNode;
@@ -22,22 +22,20 @@ interface IVirtualScroller_My<T> {
 
 const OVERVIEW_START_INDEX_DEFAULT = 0;
 
-// Можно вынести в пропсы при необходимости
-const MAX_FETCH_SIZE = 10;
-const MAX_CACHE_SIZE = 20;
-
 export const VirtualScroller_My = <T,>({
   itemHeight = 20,
   items,
   visibleItemsCount = 5,
   paddingItemsCount = 2,
-  startIndexDefault = 0,
+  // startIndexDefault = 0,
   renderItem,
   getData,
   itemsCount,
 }: IVirtualScroller_My<T>) => {
-  const [itemCache, setItemCache] = useState<Map<number, T>>(new Map());
-  const [isLoading, setIsLoading] = useState(false);
+  const [innerItems, setInnerItems] = useState<Map<number, T>>(
+    new Map(items.map((item, index) => [index, item]))
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const overviewRef = useRef<HTMLDivElement>(null);
 
@@ -62,98 +60,62 @@ export const VirtualScroller_My = <T,>({
 
   const onScrollOverview = (event: UIEvent<HTMLDivElement>) => {
     const scrollTop = event.currentTarget.scrollTop;
+    // если элемент полностью не проскролен, то не будем считать его проскроленным
     const scrolledItems = Math.floor(scrollTop / itemHeight);
     setOverviewStartIndex(scrolledItems);
   };
 
-  // Инициализируем кэш начальными данными
+  // подзагрузка нижних элементов
   useEffect(() => {
-    const initialCache = new Map<number, T>();
-    items.forEach((item, index) => {
-      initialCache.set(index, item);
-    });
-    setItemCache(initialCache);
-  }, [items]);
+    if (isLoading || !innerItems.size) return;
 
-  // Подгрузка блока данных, если не хватает
-  useEffect(() => {
-    if (isLoading) return;
+    const maxInnerItemIndex = Math.max(...innerItems.keys());
 
-    let needFetch = false;
-    let fetchStart = 0;
-
-    for (let i = paddingStartIndex; i < paddingEndIndex; i++) {
-      if (!itemCache.has(i)) {
-        needFetch = true;
-        fetchStart = Math.floor(i / MAX_FETCH_SIZE) * MAX_FETCH_SIZE;
-        break;
-      }
-    }
-
-    if (needFetch) {
-      const fetchLimit = Math.min(MAX_FETCH_SIZE, itemsCount - fetchStart);
+    // paddingEndIndex - 1 > innerItems.length = как только скроллим на пустоту, то делаем запрос
+    if (paddingEndIndex - 1 > maxInnerItemIndex) {
+      const threshold = 10;
       setIsLoading(true);
-      getData(fetchStart, fetchLimit)
+      getData(maxInnerItemIndex + 1, threshold)
         .then((fetchedItems) => {
-          setItemCache((oldCache) => {
-            const newCache = new Map(oldCache);
-            fetchedItems.forEach((item, idx) => {
-              newCache.set(fetchStart + idx, item);
-            });
+          const fetchedItemsMap = new Map(
+            fetchedItems.map((item, index) => [
+              index + maxInnerItemIndex + 1,
+              item,
+            ])
+          );
+          setInnerItems((oldMap) => {
+            const newCache = new Map([...oldMap, ...fetchedItemsMap]);
+            console.log(newCache);
             return newCache;
           });
         })
-        .finally(() => setIsLoading(false));
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
-  }, [
-    paddingStartIndex,
-    paddingEndIndex,
-    itemCache,
-    isLoading,
-    getData,
-    itemsCount,
-  ]);
+  }, [innerItems.size, isLoading, paddingEndIndex]);
 
-  // Очистка устаревшего кэша, если его слишком много
-  useEffect(() => {
-    const minKeep = Math.max(0, overviewStartIndex - MAX_CACHE_SIZE / 2);
-    const maxKeep = Math.min(
-      itemsCount,
-      overviewStartIndex + MAX_CACHE_SIZE / 2
-    );
+  console.log(Array.from(innerItems.values()));
 
-    setItemCache((oldCache) => {
-      const newCache = new Map<number, T>();
-      for (let i = minKeep; i < maxKeep; i++) {
-        const item = oldCache.get(i);
-        if (item !== undefined) {
-          newCache.set(i, item);
-        }
-      }
-      return newCache;
-    });
-  }, [overviewStartIndex, itemsCount]);
-
-  // Установка scrollTop при первом рендере
+  // удаление верхних элементов с кеша
   // useEffect(() => {
-  //   if (overviewRef.current && itemCache.size > 0) {
+  //   const MAX_CACHE_SIZE = 5;
+
+  //   if (paddingStartIndex - 1 >= MAX_CACHE_SIZE) {
+
+  //   }
+  // }, [paddingStartIndex]);
+
+  useEffect(() => {
+    setInnerItems(new Map(items.map((item, index) => [index, item])));
+  }, [items]);
+
+  // useEffect(() => {
+  //   if (overviewRef.current && innerItems.size > 0 && startIndexDefault) {
   //     const scrollTopDefault = startIndexDefault * itemHeight;
   //     overviewRef.current.scrollTop = scrollTopDefault;
   //   }
-  // }, [itemCache.size, itemHeight, startIndexDefault]);
-
-  console.log(Array.from(itemCache.values()));
-
-  // Генерация видимых элементов
-  const renderedItems: ReactNode[] = [];
-  for (let i = paddingStartIndex; i < paddingEndIndex; i++) {
-    const item = itemCache.get(i);
-    renderedItems.push(
-      <div key={i} style={{ height: itemHeight }}>
-        {item !== undefined ? renderItem(item) : null}
-      </div>
-    );
-  }
+  // }, [innerItems.size, itemHeight, startIndexDefault]);
 
   return (
     <div
@@ -163,7 +125,9 @@ export const VirtualScroller_My = <T,>({
       className={styles.viewport}
     >
       <div style={{ height: topOffsetPx }} />
-      {renderedItems}
+      {Array.from(innerItems.values())
+        .slice(paddingStartIndex, paddingEndIndex)
+        .map(renderItem)}
       <div style={{ height: bottomOffsetPx }} />
     </div>
   );
