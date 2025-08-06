@@ -10,10 +10,10 @@ import {
 
 interface IVirtualScroller_My<T> {
   itemHeight?: number;
-  paddingItemsCount?: number; // количество дополнительных элементов сверху и снизу по отдельности
+  paddingItemsCount?: number;
   startIndexDefault?: number;
 
-  items: T[];
+  items: T[]; // начальные данные
   itemsCount: number;
   visibleItemsCount?: number;
   renderItem: (item: T) => ReactNode;
@@ -21,6 +21,10 @@ interface IVirtualScroller_My<T> {
 }
 
 const OVERVIEW_START_INDEX_DEFAULT = 0;
+
+// Можно вынести в пропсы при необходимости
+const MAX_FETCH_SIZE = 10;
+const MAX_CACHE_SIZE = 20;
 
 export const VirtualScroller_My = <T,>({
   itemHeight = 20,
@@ -32,8 +36,8 @@ export const VirtualScroller_My = <T,>({
   getData,
   itemsCount,
 }: IVirtualScroller_My<T>) => {
-  const [innerItems, setInnerItems] = useState<T[]>(items);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [itemCache, setItemCache] = useState<Map<number, T>>(new Map());
+  const [isLoading, setIsLoading] = useState(false);
 
   const overviewRef = useRef<HTMLDivElement>(null);
 
@@ -58,38 +62,98 @@ export const VirtualScroller_My = <T,>({
 
   const onScrollOverview = (event: UIEvent<HTMLDivElement>) => {
     const scrollTop = event.currentTarget.scrollTop;
-    // если элемент полностью не проскролен, то не будем считать его проскроленным
     const scrolledItems = Math.floor(scrollTop / itemHeight);
     setOverviewStartIndex(scrolledItems);
   };
 
+  // Инициализируем кэш начальными данными
   useEffect(() => {
-    if (isLoading || !innerItems.length) return;
-
-    // paddingEndIndex - 1 > innerItems.length = как только скроллим на пустоту, то делаем запрос
-    if (paddingEndIndex - 1 > innerItems.length) {
-      const threshold = 10;
-      setIsLoading(true);
-      getData(innerItems.length, threshold)
-        .then((fetchedItems) => {
-          setInnerItems((oldItems) => [...oldItems, ...fetchedItems]);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    }
-  }, [innerItems.length, isLoading, paddingEndIndex]);
-
-  useEffect(() => {
-    setInnerItems(items);
+    const initialCache = new Map<number, T>();
+    items.forEach((item, index) => {
+      initialCache.set(index, item);
+    });
+    setItemCache(initialCache);
   }, [items]);
 
+  // Подгрузка блока данных, если не хватает
   useEffect(() => {
-    if (overviewRef.current && innerItems.length > 0) {
-      const scrollTopDefault = startIndexDefault * itemHeight;
-      overviewRef.current.scrollTop = scrollTopDefault;
+    if (isLoading) return;
+
+    let needFetch = false;
+    let fetchStart = 0;
+
+    for (let i = paddingStartIndex; i < paddingEndIndex; i++) {
+      if (!itemCache.has(i)) {
+        needFetch = true;
+        fetchStart = Math.floor(i / MAX_FETCH_SIZE) * MAX_FETCH_SIZE;
+        break;
+      }
     }
-  }, [innerItems.length, itemHeight, startIndexDefault]);
+
+    if (needFetch) {
+      const fetchLimit = Math.min(MAX_FETCH_SIZE, itemsCount - fetchStart);
+      setIsLoading(true);
+      getData(fetchStart, fetchLimit)
+        .then((fetchedItems) => {
+          setItemCache((oldCache) => {
+            const newCache = new Map(oldCache);
+            fetchedItems.forEach((item, idx) => {
+              newCache.set(fetchStart + idx, item);
+            });
+            return newCache;
+          });
+        })
+        .finally(() => setIsLoading(false));
+    }
+  }, [
+    paddingStartIndex,
+    paddingEndIndex,
+    itemCache,
+    isLoading,
+    getData,
+    itemsCount,
+  ]);
+
+  // Очистка устаревшего кэша, если его слишком много
+  useEffect(() => {
+    const minKeep = Math.max(0, overviewStartIndex - MAX_CACHE_SIZE / 2);
+    const maxKeep = Math.min(
+      itemsCount,
+      overviewStartIndex + MAX_CACHE_SIZE / 2
+    );
+
+    setItemCache((oldCache) => {
+      const newCache = new Map<number, T>();
+      for (let i = minKeep; i < maxKeep; i++) {
+        const item = oldCache.get(i);
+        if (item !== undefined) {
+          newCache.set(i, item);
+        }
+      }
+      return newCache;
+    });
+  }, [overviewStartIndex, itemsCount]);
+
+  // Установка scrollTop при первом рендере
+  // useEffect(() => {
+  //   if (overviewRef.current && itemCache.size > 0) {
+  //     const scrollTopDefault = startIndexDefault * itemHeight;
+  //     overviewRef.current.scrollTop = scrollTopDefault;
+  //   }
+  // }, [itemCache.size, itemHeight, startIndexDefault]);
+
+  console.log(Array.from(itemCache.values()));
+
+  // Генерация видимых элементов
+  const renderedItems: ReactNode[] = [];
+  for (let i = paddingStartIndex; i < paddingEndIndex; i++) {
+    const item = itemCache.get(i);
+    renderedItems.push(
+      <div key={i} style={{ height: itemHeight }}>
+        {item !== undefined ? renderItem(item) : null}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -99,7 +163,7 @@ export const VirtualScroller_My = <T,>({
       className={styles.viewport}
     >
       <div style={{ height: topOffsetPx }} />
-      {innerItems.slice(paddingStartIndex, paddingEndIndex).map(renderItem)}
+      {renderedItems}
       <div style={{ height: bottomOffsetPx }} />
     </div>
   );
