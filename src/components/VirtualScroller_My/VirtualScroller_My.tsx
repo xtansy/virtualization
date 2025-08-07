@@ -11,7 +11,7 @@ import {
 interface IVirtualScroller_My<T> {
   itemHeight?: number;
   paddingItemsCount?: number; // количество дополнительных элементов сверху и снизу по отдельности
-  startIndexDefault?: number;
+  // startIndexDefault?: number;
 
   items: T[];
   itemsCount: number;
@@ -21,6 +21,8 @@ interface IVirtualScroller_My<T> {
 }
 
 const OVERVIEW_START_INDEX_DEFAULT = 0;
+
+const FETCHING_SIZE = 10;
 
 export const VirtualScroller_My = <T,>({
   itemHeight = 20,
@@ -32,9 +34,9 @@ export const VirtualScroller_My = <T,>({
   getData,
   itemsCount,
 }: IVirtualScroller_My<T>) => {
-  const [innerItems, setInnerItems] = useState<Map<number, T>>(
-    new Map(items.map((item, index) => [index, item]))
-  );
+  const [cachedIndexToItemMap, setCachedIndexToItemMap] = useState<
+    Map<number, T>
+  >(new Map());
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const overviewRef = useRef<HTMLDivElement>(null);
@@ -42,6 +44,8 @@ export const VirtualScroller_My = <T,>({
   const [overviewStartIndex, setOverviewStartIndex] = useState<number>(
     OVERVIEW_START_INDEX_DEFAULT
   );
+
+  console.log(`overviewStartIndex = ${overviewStartIndex}`);
 
   const paddingStartIndex = Math.max(
     overviewStartIndex - paddingItemsCount,
@@ -65,57 +69,51 @@ export const VirtualScroller_My = <T,>({
     setOverviewStartIndex(scrolledItems);
   };
 
-  // подзагрузка нижних элементов
   useEffect(() => {
-    if (isLoading || !innerItems.size) return;
-
-    const maxInnerItemIndex = Math.max(...innerItems.keys());
-
-    // paddingEndIndex - 1 > innerItems.length = как только скроллим на пустоту, то делаем запрос
-    if (paddingEndIndex - 1 > maxInnerItemIndex) {
-      const threshold = 10;
-      setIsLoading(true);
-      getData(maxInnerItemIndex + 1, threshold)
-        .then((fetchedItems) => {
-          const fetchedItemsMap = new Map(
-            fetchedItems.map((item, index) => [
-              index + maxInnerItemIndex + 1,
-              item,
-            ])
-          );
-          setInnerItems((oldMap) => {
-            const newCache = new Map([...oldMap, ...fetchedItemsMap]);
-            console.log(newCache);
-            return newCache;
-          });
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    }
-  }, [innerItems.size, isLoading, paddingEndIndex]);
-
-  console.log(Array.from(innerItems.values()));
-
-  // удаление верхних элементов с кеша
-  // useEffect(() => {
-  //   const MAX_CACHE_SIZE = 5;
-
-  //   if (paddingStartIndex - 1 >= MAX_CACHE_SIZE) {
-
-  //   }
-  // }, [paddingStartIndex]);
-
-  useEffect(() => {
-    setInnerItems(new Map(items.map((item, index) => [index, item])));
+    setCachedIndexToItemMap(new Map(items.map((item, index) => [index, item])));
   }, [items]);
 
-  // useEffect(() => {
-  //   if (overviewRef.current && innerItems.size > 0 && startIndexDefault) {
-  //     const scrollTopDefault = startIndexDefault * itemHeight;
-  //     overviewRef.current.scrollTop = scrollTopDefault;
-  //   }
-  // }, [innerItems.size, itemHeight, startIndexDefault]);
+  useEffect(() => {
+    if (isLoading) return;
+
+    const isNeedFetch = !cachedIndexToItemMap.has(paddingEndIndex);
+
+    console.log(`paddingEndIndex = ${paddingEndIndex}`);
+
+    // if (!isNeedFetch) return;
+
+    // setIsLoading(true);
+    // getData(
+    //   paddingEndIndex,
+    //   Math.min(itemsCount - paddingEndIndex + 1, FETCHING_SIZE)
+    // )
+    //   .then((fetchedItems) => {
+    //     setCachedIndexToItemMap((oldCachedMap) => {
+    //       const fetchedItemsTuple: [number, T][] = fetchedItems.map(
+    //         (item, index) => [index + paddingEndIndex, item]
+    //       );
+    //       const newCachedMap = new Map([
+    //         ...oldCachedMap.entries(),
+    //         ...fetchedItemsTuple,
+    //       ]);
+    //       return newCachedMap;
+    //     });
+    //   })
+    //   .finally(() => setIsLoading(false));
+  }, [paddingEndIndex]);
+
+  console.log(Array.from(cachedIndexToItemMap.values()));
+
+  const renderItems = () => {
+    const items = [];
+    for (let i = paddingStartIndex; i < paddingEndIndex; i++) {
+      const item = cachedIndexToItemMap.get(i);
+      if (item) {
+        items.push(renderItem(item));
+      }
+    }
+    return items;
+  };
 
   return (
     <div
@@ -125,9 +123,7 @@ export const VirtualScroller_My = <T,>({
       className={styles.viewport}
     >
       <div style={{ height: topOffsetPx }} />
-      {Array.from(innerItems.values())
-        .slice(paddingStartIndex, paddingEndIndex)
-        .map(renderItem)}
+      {renderItems()}
       <div style={{ height: bottomOffsetPx }} />
     </div>
   );
