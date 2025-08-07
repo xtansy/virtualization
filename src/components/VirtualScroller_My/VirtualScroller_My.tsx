@@ -31,7 +31,7 @@ export const VirtualScroller_My = <T,>({
   items,
   visibleItemsCount = 5,
   paddingItemsCount = 2,
-  startIndexDefault = 0,
+  // startIndexDefault = 0,
   renderItem,
   getData,
   itemsCount,
