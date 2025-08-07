@@ -85,6 +85,9 @@ export const VirtualScroller_My = <T,>({
     for (let i = paddingStartIndex; i < paddingEndIndex; i++) {
       if (!itemCache.has(i)) {
         needFetch = true;
+        // ищем начало блока
+        // Пример:
+        // i = 38, b = 10; floor(38 / 10) * 10 = 30	[30–39]
         fetchStart = Math.floor(i / MAX_FETCH_SIZE) * MAX_FETCH_SIZE;
         break;
       }
