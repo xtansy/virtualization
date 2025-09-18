@@ -14,9 +14,9 @@ export const getRows = async (params: IGetRowsParams): Promise<IUser[]> => {
       const userMessage =
         error.response?.data?.message || "Произошла ошибка при загрузке данных";
 
-      throw new ApiError(userMessage, error.response?.status, error);
+      throw new ApiError(userMessage);
     } else {
-      throw new ApiError("Неизвестная ошибка", undefined, error);
+      throw new ApiError("Неизвестная ошибка");
     }
   }
 };

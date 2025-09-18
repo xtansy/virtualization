@@ -1,6 +1,6 @@
 import styles from "./styles.module.scss";
 
-import { VirtualScroller } from "../components";
+import { VirtualScroller_Old } from "../components";
 
 const SETTINGS = {
   minIndex: 1,
@@ -43,7 +43,7 @@ export const AppWithVirtualScroller = () => {
     <div className={styles.wrapper}>
       <div className={styles.content}>
         <div style={{ flexGrow: 1 }}>
-          <VirtualScroller
+          <VirtualScroller_Old
             settings={SETTINGS}
             get={getData}
             row={rowTemplate}

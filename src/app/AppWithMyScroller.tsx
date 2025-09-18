@@ -1,6 +1,6 @@
 import styles from "./styles.module.scss";
 
-import { VirtualScroller_My } from "../components";
+import { VirtualScroller } from "../components";
 // import { generateMockArrayData, type IArrayItemMock } from "../utils";
 import { getRows } from "../api";
 import type { IUser } from "../api/types";
@@ -34,10 +34,9 @@ export const AppWithMyScroller = () => {
     <div className={styles.wrapper}>
       <div className={styles.content}>
         <div style={{ flexGrow: 1 }}>
-          <VirtualScroller_My
+          <VirtualScroller
             itemsCount={70}
             items={initialItems}
-            getData={getData}
             itemHeight={ITEM_HEIGHT}
             renderItem={renderItem}
           />
