@@ -1,6 +1,6 @@
 import styles from "./styles.module.scss";
 
-import { VirtualScroller_Old } from "../components";
+import { VirtualScroller_Old } from "../components/";
 
 const SETTINGS = {
   minIndex: 1,
