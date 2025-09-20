@@ -15,7 +15,8 @@
   },
   "scripts": {
     "dev": "concurrently \"npx json-server db.json\" \"vite\"",
-    "build": "tsc -b && vite build",
+    "build:types": "tsc -p tsconfig.build.json",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
