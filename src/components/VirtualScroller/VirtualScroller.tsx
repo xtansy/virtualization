@@ -1,5 +1,3 @@
-import styles from "./styles.module.scss";
-
 import {
   useEffect,
   useRef,
@@ -75,8 +73,11 @@ export const VirtualScroller = <T,>({
     <div
       ref={overviewRef}
       onScroll={onScrollOverview}
-      style={{ height: overviewHeight }}
-      className={styles.viewport}
+      style={{
+        height: overviewHeight,
+        overflowY: "auto",
+        border: "1px solid green",
+      }}
     >
       <div style={{ height: topOffsetPx }} />
       {innerItems.slice(paddingStartIndex, paddingEndIndex).map(renderItem)}
