@@ -5,7 +5,7 @@
   "files": [
     "dist"
   ],
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/types/VirtualScroller.d.ts",
   "main": "./dist/virtualization-lib.umd.cjs",
   "module": "./dist/virtualization-lib.js",
   "exports": {
