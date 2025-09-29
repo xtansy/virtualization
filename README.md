@@ -5,6 +5,7 @@
 Решает проблему производительности при работе с большими списками, рендеря только видимые пользователю элементы.
 
 [![npm](https://img.shields.io/npm/v/virtualization-lib)](https://www.npmjs.com/package/virtualization-lib)
+[![GitHub](https://img.shields.io/badge/GitHub-xtansy-blue?logo=github)](https://github.com/xtansy/virtualization)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/virtualization-lib)](https://bundlephobia.com/package/virtualization-lib)
 [![downloads](https://img.shields.io/npm/dm/virtualization-lib)](https://www.npmjs.com/package/virtualization-lib)
 
