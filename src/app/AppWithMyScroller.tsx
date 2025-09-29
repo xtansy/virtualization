@@ -2,13 +2,18 @@ import styles from "./styles.module.scss";
 
 import { VirtualScroller } from "../components";
 // import { generateMockArrayData, type IArrayItemMock } from "../utils";
-import { getRows } from "../api";
-import type { IUser } from "../api/types";
-import { useEffect, useState } from "react";
 
-// const MOCK_ITEMS: IArrayItemMock[] = generateMockArrayData(20);
+import { getRows, type IUser } from "../api";
+import { useEffect, useState } from "react";
+const getData = async (startIndex: number, limit: number) => {
+  const data = await getRows({ _start: startIndex, _limit: limit });
+  return data;
+};
 
 const ITEM_HEIGHT = 50;
+const ITEMS_COUNT = 70;
+
+// const MOCK_ITEMS: IArrayItemMock[] = generateMockArrayData(ITEMS_COUNT);
 
 const renderItem = (item: IUser) => {
   return (
@@ -18,16 +23,11 @@ const renderItem = (item: IUser) => {
   );
 };
 
-const getData = async (startIndex: number, limit: number) => {
-  const data = await getRows({ _start: startIndex, _limit: limit });
-  return data;
-};
-
 export const AppWithMyScroller = () => {
-  const [initialItems, setInitialItems] = useState<IUser[]>([]);
+  const [items, setItems] = useState<IUser[]>([]);
 
   useEffect(() => {
-    getData(0, 9).then((items) => setInitialItems(items));
+    getData(0, 70).then((res) => setItems(res));
   }, []);
 
   return (
@@ -35,8 +35,9 @@ export const AppWithMyScroller = () => {
       <div className={styles.content}>
         <div style={{ flexGrow: 1 }}>
           <VirtualScroller
-            itemsCount={70}
-            items={initialItems}
+            overviewClassname={styles.overview}
+            itemsCount={ITEMS_COUNT}
+            items={items}
             itemHeight={ITEM_HEIGHT}
             renderItem={renderItem}
           />

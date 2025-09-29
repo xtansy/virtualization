@@ -8,12 +8,13 @@ import {
 
 interface IVirtualScroller<T> {
   itemHeight?: number;
+  visibleItemsCount?: number;
   paddingItemsCount?: number; // количество дополнительных элементов сверху и снизу по отдельности
   startIndexDefault?: number;
+  overviewClassname?: string;
 
   items: T[];
   itemsCount: number;
-  visibleItemsCount?: number;
   renderItem: (item: T) => ReactNode;
 }
 
@@ -27,6 +28,7 @@ export const VirtualScroller = <T,>({
   startIndexDefault = 0,
   renderItem,
   itemsCount,
+  overviewClassname,
 }: IVirtualScroller<T>) => {
   const [innerItems, setInnerItems] = useState<T[]>(items);
 
@@ -71,12 +73,12 @@ export const VirtualScroller = <T,>({
 
   return (
     <div
+      className={overviewClassname}
       ref={overviewRef}
       onScroll={onScrollOverview}
       style={{
         height: overviewHeight,
         overflowY: "auto",
-        border: "1px solid green",
       }}
     >
       <div style={{ height: topOffsetPx }} />
