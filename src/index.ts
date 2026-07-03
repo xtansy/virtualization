@@ -1,1 +1,1 @@
-export * from "./components/VirtualScroller/VirtualScroller";
+export * from "./VirtualScroller";

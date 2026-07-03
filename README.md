@@ -5,9 +5,15 @@
 Решает проблему производительности при работе с большими списками, рендеря только видимые пользователю элементы.
 
 [![npm](https://img.shields.io/npm/v/virtualization-lib)](https://www.npmjs.com/package/virtualization-lib)
-[![GitHub](https://img.shields.io/badge/GitHub-xtansy-blue?logo=github)](https://github.com/xtansy/virtualization)
+[![CI](https://github.com/xtansy/virtualization/actions/workflows/ci.yml/badge.svg)](https://github.com/xtansy/virtualization/actions/workflows/ci.yml)
+[![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](#разработка)
+[![types](https://img.shields.io/npm/types/virtualization-lib)](https://www.npmjs.com/package/virtualization-lib)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/virtualization-lib)](https://bundlephobia.com/package/virtualization-lib)
 [![downloads](https://img.shields.io/npm/dm/virtualization-lib)](https://www.npmjs.com/package/virtualization-lib)
+[![license](https://img.shields.io/npm/l/virtualization-lib)](./LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-xtansy-blue?logo=github)](https://github.com/xtansy/virtualization)
+
+📺 **[Живое демо (Ladle)](https://xtansy.github.io/virtualization/)**
 
 ## Установка
 
@@ -67,6 +73,18 @@ export default function App() {
 - Минималистичный API
 - Гибкая - можно рендерить любые React-компоненты
 - Поддержка стартового индекса
+
+## Разработка
+
+```bash
+npm install
+npm run dev        # Ladle-стенд с примерами в браузере
+npm run build      # сборка библиотеки в dist/
+npm run typecheck  # проверка типов
+npm run lint       # линт
+```
+
+Устройство проекта, логика компонента и выбор инструментов — в [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Лицензия
 
